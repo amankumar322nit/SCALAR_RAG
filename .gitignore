@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Environment and Secrets (Never commit API keys!)
+.env
+backend/.env
+
+# Local Telemetry and Databases
+*.db
+*.sqlite3
+*.jsonl
+data/traces.db
+data/traces.jsonl
+backend/data/traces.db
+backend/data/traces.jsonl
+
+# Operating System & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.tempmediaStorage/

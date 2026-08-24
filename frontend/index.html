@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scaler Learner Support - AI Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-group">
+        <div class="logo-icon">⚡</div>
+        <div>
+          <h1 class="logo-title">Scaler Support AI</h1>
+          <span class="logo-sub">Grounded RAG Pipeline & Observability Engine</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="reindex-btn" class="btn btn-secondary" title="Reindex Corpus">
+          <span class="icon">🔄</span> Reindex
+        </button>
+        <button id="online-evals-btn" class="btn btn-secondary" title="View Live Online Evaluation Metrics">
+          <span class="icon">📈</span> Online Evals
+        </button>
+        <button id="view-traces-btn" class="btn btn-secondary" title="View Recent Traces">
+          <span class="icon">📊</span> Traces
+        </button>
+        <div class="status-badge" id="system-status">
+          <span class="status-dot"></span> System Ready
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-layout">
+      <!-- Left / Center: Chat Conversation -->
+      <section class="chat-section">
+        <div class="chat-messages" id="chat-messages">
+          <!-- Welcome Message -->
+          <div class="message-card assistant-msg">
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-content">
+              <div class="msg-header">
+                <strong>Scaler AI Assistant</strong>
+                <span class="badge verified-badge">Grounded • Scaler Docs</span>
+              </div>
+              <p>Hello! I am your AI Learner Support Assistant. I can help you with questions about course curriculums, refund policies, scholarships, placement eligibility, and batch pause requests.</p>
+              <div class="prompt-chips">
+                <button class="chip" data-query="What is the 7-day refund policy?">What is the 7-day refund policy?</button>
+                <button class="chip" data-query="What are the eligibility criteria for placement support?">Placement support eligibility?</button>
+                <button class="chip" data-query="Can I pause my batch if I have an emergency?">How does batch pause work?</button>
+                <button class="chip" data-query="Are there scholarships for Women in Tech?">Women in Tech scholarship?</button>
+                <button class="chip" data-query="What topics are covered in High-Level System Design (HLD)?">HLD Module Syllabus?</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="chat-input-wrapper">
+          <form id="query-form" class="chat-input-form">
+            <input 
+              type="text" 
+              id="query-input" 
+              placeholder="Ask any question about Scaler policies, courses, or FAQs..." 
+              autocomplete="off" 
+              required
+            />
+            <button type="submit" id="send-btn" class="btn btn-primary">
+              <span>Ask</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Right Panel: Real-time Inspection & Sources -->
+      <aside class="inspector-section" id="inspector-section">
+        <div class="inspector-header">
+          <h3>Grounding & Trace Inspector</h3>
+          <span class="inspector-badge" id="inspector-status">Awaiting Query</span>
+        </div>
+        <div class="inspector-body" id="inspector-body">
+          <div class="empty-inspector">
+            <div class="empty-icon">🔍</div>
+            <p>Submit a query to inspect real-time retrieved chunks, similarity scores, prompt synthesis, and latency metrics.</p>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Traces Modal -->
+    <div class="modal-overlay" id="traces-modal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>📊 Query Observability Traces (SQLite)</h2>
+          <button class="modal-close" id="close-modal">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-traces-list">
+          <p>Loading traces...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Online Evals Modal -->
+    <div class="modal-overlay" id="evals-modal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>📈 Production Online Evaluation Telemetry</h2>
+          <button class="modal-close" id="close-evals-modal">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-evals-content">
+          <p>Loading online evaluation telemetry...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

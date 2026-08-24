@@ -1,0 +1,82 @@
+[
+  {
+    "id": "TC-01",
+    "category": "Policy - Refund",
+    "query": "What is the refund policy if I want to withdraw in the first week?",
+    "expected_doc": "policies/refund_and_cancellation_policy.md",
+    "expected_facts": ["7-day", "unconditional", "100%", "full refund", "no cancellation charges"],
+    "is_out_of_scope": false
+  },
+  {
+    "id": "TC-02",
+    "category": "Policy - Placement",
+    "query": "What are the eligibility criteria to get placement support from Scaler?",
+    "expected_doc": "policies/placement_guarantee_and_support.md",
+    "expected_facts": ["85%", "attendance", "80%", "assignments", "PPRA", "mock"],
+    "is_out_of_scope": false
+  },
+  {
+    "id": "TC-03",
+    "category": "Policy - Financial Aid",
+    "query": "Is there any scholarship available specifically for women candidates?",
+    "expected_doc": "policies/scholarships_and_financial_aid.md",
+    "expected_facts": ["Women in Tech", "25,000", "Scholarship Test", "SOP"],
+    "is_out_of_scope": false
+  },
+  {
+    "id": "TC-04",
+    "category": "Policy - Batch Pause",
+    "query": "Can I pause my batch if I have an emergency at work or medical issue?",
+    "expected_doc": "policies/batch_pause_and_extension_policy.md",
+    "expected_facts": ["6 months", "Module 1", "Learner Dashboard", "pause"],
+    "is_out_of_scope": false
+  },
+  {
+    "id": "TC-05",
+    "category": "Course - Scaler Academy",
+    "query": "What concepts are taught in the Low-Level Design (LLD) module of Scaler Academy?",
+    "expected_doc": "courses/scaler_academy_software_development.md",
+    "expected_facts": ["Design patterns", "SOLID", "OOP", "Singleton", "Factory"],
+    "is_out_of_scope": false
+  },
+  {
+    "id": "TC-06",
+    "category": "Course - Data Science",
+    "query": "What machine learning algorithms and deep learning topics are covered in Data Science?",
+    "expected_doc": "courses/scaler_data_science_and_machine_learning.md",
+    "expected_facts": ["Linear", "Logistic", "Random Forests", "XGBoost", "Deep Learning", "PyTorch", "Transformers"],
+    "is_out_of_scope": false
+  },
+  {
+    "id": "TC-07",
+    "category": "FAQ - Mentorship & Recordings",
+    "query": "What happens if I miss a live lecture and how long do I keep LMS access?",
+    "expected_doc": "faqs/general_learner_support_faq.md",
+    "expected_facts": ["4 hours", "recorded", "lifetime access", "Learner Dashboard"],
+    "is_out_of_scope": false
+  },
+  {
+    "id": "TC-08",
+    "category": "FAQ - Invoicing & Tax",
+    "query": "Can my employer sponsor my course fee and can I get a GST invoice?",
+    "expected_doc": "faqs/payment_plans_and_invoicing_faq.md",
+    "expected_facts": ["GST", "15-digit", "GSTIN", "corporate reimbursement", "B2B"],
+    "is_out_of_scope": false
+  },
+  {
+    "id": "TC-09",
+    "category": "Negative / Out-of-Scope",
+    "query": "Does Scaler provide free physical laptops and airline tickets to learners?",
+    "expected_doc": null,
+    "expected_facts": ["could not find information", "support@scaler.com"],
+    "is_out_of_scope": true
+  },
+  {
+    "id": "TC-10",
+    "category": "Negative / Out-of-Scope",
+    "query": "Can I learn French cooking recipes or culinary arts at Scaler Academy?",
+    "expected_doc": null,
+    "expected_facts": ["could not find information", "support@scaler.com"],
+    "is_out_of_scope": true
+  }
+]

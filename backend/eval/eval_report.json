@@ -1,0 +1,214 @@
+{
+  "timestamp": "2026-08-24T11:28:56Z",
+  "summary": {
+    "total_cases": 10,
+    "passed_cases": 10,
+    "pass_rate_percent": 100.0,
+    "context_precision_percent": 100.0,
+    "llm_judge_faithfulness_percent": 100.0,
+    "llm_judge_correctness_percent": 96.6,
+    "avg_latency_ms": 769.48
+  },
+  "details": [
+    {
+      "id": "TC-01",
+      "category": "Policy - Refund",
+      "query": "What is the refund policy if I want to withdraw in the first week?",
+      "is_out_of_scope": false,
+      "retrieval_pass": true,
+      "faithfulness_score": 1.0,
+      "correctness_score": 1.0,
+      "overall_pass": true,
+      "latency_ms": 1337.94,
+      "judge_rationale": "The answer directly reflects the retrieved context, stating the 7\u2011day unconditional money\u2011back guarantee, 100% full refund, no cancellation fees, request method, and processing time, without adding any unsupported information.",
+      "retrieved_docs": [
+        "policies/refund_and_cancellation_policy.md",
+        "policies/refund_and_cancellation_policy.md",
+        "policies/refund_and_cancellation_policy.md",
+        "policies/refund_and_cancellation_policy.md"
+      ],
+      "citations": [
+        "[Chunk 1]",
+        "[Chunk 3]"
+      ],
+      "answer_snippet": "- **7\u2011Day Unconditional Money\u2011Back Guarantee**  \n  - If you submit a withdrawal request within the first 7 calendar days from the official batch comme..."
+    },
+    {
+      "id": "TC-02",
+      "category": "Policy - Placement",
+      "query": "What are the eligibility criteria to get placement support from Scaler?",
+      "is_out_of_scope": false,
+      "retrieval_pass": true,
+      "faithfulness_score": 1.0,
+      "correctness_score": 1.0,
+      "overall_pass": true,
+      "latency_ms": 1114.65,
+      "judge_rationale": "The answer directly mirrors the eligibility criteria listed in the retrieved context, includes all required points (attendance, homework, PPRA score, mock interviews), and does not add any unsupported information.",
+      "retrieved_docs": [
+        "policies/placement_guarantee_and_support.md",
+        "policies/placement_guarantee_and_support.md",
+        "policies/placement_guarantee_and_support.md",
+        "faqs/general_learner_support_faq.md"
+      ],
+      "citations": [
+        "[Chunk 2]"
+      ],
+      "answer_snippet": "**Eligibility criteria for placement support (as defined in the Scaler Placement Assistance and Career Support Policy):**\n\n- **Attendance:** Minimum\u202f8..."
+    },
+    {
+      "id": "TC-03",
+      "category": "Policy - Financial Aid",
+      "query": "Is there any scholarship available specifically for women candidates?",
+      "is_out_of_scope": false,
+      "retrieval_pass": true,
+      "faithfulness_score": 1.0,
+      "correctness_score": 1.0,
+      "overall_pass": true,
+      "latency_ms": 1737.06,
+      "judge_rationale": "The answer directly reflects the retrieved context, mentioning the Women in Tech scholarship, the \u20b925,000 amount, the SOP requirement, and the 75th percentile NST score, with no extraneous or unsupported information.",
+      "retrieved_docs": [
+        "policies/scholarships_and_financial_aid.md",
+        "policies/scholarships_and_financial_aid.md"
+      ],
+      "citations": [
+        "[Chunk 1]"
+      ],
+      "answer_snippet": "Yes. Scaler offers a dedicated **Women in Tech scholarship** that provides up to\u202f\u20b925,000 off tuition fees for eligible female candidates who submit a ..."
+    },
+    {
+      "id": "TC-04",
+      "category": "Policy - Batch Pause",
+      "query": "Can I pause my batch if I have an emergency at work or medical issue?",
+      "is_out_of_scope": false,
+      "retrieval_pass": true,
+      "faithfulness_score": 1.0,
+      "correctness_score": 0.8,
+      "overall_pass": true,
+      "latency_ms": 1047.09,
+      "judge_rationale": "The answer is fully grounded in the provided context with no hallucinations, but it omits the important fact that the maximum cumulative pause duration is 6 months, which is a key detail expected in the response.",
+      "retrieved_docs": [
+        "policies/batch_pause_and_extension_policy.md",
+        "policies/batch_pause_and_extension_policy.md",
+        "faqs/payment_plans_and_invoicing_faq.md"
+      ],
+      "citations": [
+        "[Chunk 1]",
+        "[Chunk 2]"
+      ],
+      "answer_snippet": "Yes.\u202fLearners may request a formal Batch Pause when they encounter work\u2011related pressure or a medical emergency, provided they meet the eligibility cr..."
+    },
+    {
+      "id": "TC-05",
+      "category": "Course - Scaler Academy",
+      "query": "What concepts are taught in the Low-Level Design (LLD) module of Scaler Academy?",
+      "is_out_of_scope": false,
+      "retrieval_pass": true,
+      "faithfulness_score": 1.0,
+      "correctness_score": 1.0,
+      "overall_pass": true,
+      "latency_ms": 1020.32,
+      "judge_rationale": "The answer lists exactly the concepts mentioned in the retrieved context for Module 3, without adding any unsupported information.",
+      "retrieved_docs": [
+        "courses/scaler_academy_software_development.md",
+        "faqs/general_learner_support_faq.md",
+        "policies/batch_pause_and_extension_policy.md"
+      ],
+      "citations": [
+        "[Chunk 1]"
+      ],
+      "answer_snippet": "The Low\u2011Level Design (LLD) module covers the following concepts:\n\n- Design patterns: **Singleton, Factory, Strategy, Observer, Decorator**  \n- **SOLID..."
+    },
+    {
+      "id": "TC-06",
+      "category": "Course - Data Science",
+      "query": "What machine learning algorithms and deep learning topics are covered in Data Science?",
+      "is_out_of_scope": false,
+      "retrieval_pass": true,
+      "faithfulness_score": 1.0,
+      "correctness_score": 0.86,
+      "overall_pass": true,
+      "latency_ms": 1245.98,
+      "judge_rationale": "Evaluated by deterministic fact matcher fallback",
+      "retrieved_docs": [
+        "courses/scaler_data_science_and_machine_learning.md",
+        "courses/scaler_data_science_and_machine_learning.md",
+        "courses/scaler_data_science_and_machine_learning.md",
+        "courses/scaler_data_science_and_machine_learning.md"
+      ],
+      "citations": [
+        "[Chunk 1]"
+      ],
+      "answer_snippet": "**Machine\u2011learning algorithms covered**\n\n- Linear Regression  \n- Logistic Regression  \n- Decision Trees  \n- Random Forests  \n- XGBoost  \n- LightGBM  \n..."
+    },
+    {
+      "id": "TC-07",
+      "category": "FAQ - Mentorship & Recordings",
+      "query": "What happens if I miss a live lecture and how long do I keep LMS access?",
+      "is_out_of_scope": false,
+      "retrieval_pass": true,
+      "faithfulness_score": 1.0,
+      "correctness_score": 1.0,
+      "overall_pass": true,
+      "latency_ms": 86.51,
+      "judge_rationale": "Evaluated by deterministic fact matcher fallback",
+      "retrieved_docs": [
+        "faqs/general_learner_support_faq.md",
+        "faqs/general_learner_support_faq.md"
+      ],
+      "citations": [
+        "[Chunk 1]",
+        "[Chunk 2]"
+      ],
+      "answer_snippet": "Based on Scaler's official documentation regarding Scaler Learner Support: Frequently Asked Questions (FAQ) (Scaler Learner Support: Frequently Asked ..."
+    },
+    {
+      "id": "TC-08",
+      "category": "FAQ - Invoicing & Tax",
+      "query": "Can my employer sponsor my course fee and can I get a GST invoice?",
+      "is_out_of_scope": false,
+      "retrieval_pass": true,
+      "faithfulness_score": 1.0,
+      "correctness_score": 1.0,
+      "overall_pass": true,
+      "latency_ms": 89.53,
+      "judge_rationale": "Evaluated by deterministic fact matcher fallback",
+      "retrieved_docs": [
+        "faqs/payment_plans_and_invoicing_faq.md"
+      ],
+      "citations": [
+        "[Chunk 1]"
+      ],
+      "answer_snippet": "Based on Scaler's official documentation regarding Scaler Payments, Invoicing, and Tax FAQs (Scaler Payments, Invoicing, and Tax FAQs > 1. GST Invoice..."
+    },
+    {
+      "id": "TC-09",
+      "category": "Negative / Out-of-Scope",
+      "query": "Does Scaler provide free physical laptops and airline tickets to learners?",
+      "is_out_of_scope": true,
+      "retrieval_pass": true,
+      "faithfulness_score": 1.0,
+      "correctness_score": 1.0,
+      "overall_pass": true,
+      "latency_ms": 8.27,
+      "judge_rationale": "Correct out-of-scope abstention.",
+      "retrieved_docs": [],
+      "citations": [],
+      "answer_snippet": "I apologize, but I could not find information regarding this in the official Scaler documentation. Please contact the learner support team at support@..."
+    },
+    {
+      "id": "TC-10",
+      "category": "Negative / Out-of-Scope",
+      "query": "Can I learn French cooking recipes or culinary arts at Scaler Academy?",
+      "is_out_of_scope": true,
+      "retrieval_pass": true,
+      "faithfulness_score": 1.0,
+      "correctness_score": 1.0,
+      "overall_pass": true,
+      "latency_ms": 7.48,
+      "judge_rationale": "Correct out-of-scope abstention.",
+      "retrieved_docs": [],
+      "citations": [],
+      "answer_snippet": "I apologize, but I could not find information regarding this in the official Scaler documentation. Please contact the learner support team at support@..."
+    }
+  ]
+}
