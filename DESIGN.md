@@ -149,15 +149,17 @@ How do you find the right book in a giant library? You need two tools:
 
 ---
 
-### 1. Embedding Model Choice and Rationale
-- **Chosen Architecture**: Normalized Dense Embeddings ($\mathbb{R}^{256}$).
-- **Why**: Converts every sentence into a mathematical arrow (vector). Sentences with the same meaning (*"cancel my enrollment"* and *"get a refund"*) point in almost the exact same direction on the compass.
+### 1. Embedding Model Choice and Deterministic Hashing
+- **Chosen Architecture**: Normalized Dense Embeddings ($\mathbb{R}^{256}$) with Deterministic Hashing (`_stable_hash` via MD5).
+- **Why**: Converts every sentence into a mathematical vector representation where semantic concepts point in consistent coordinate directions.
+- **Cross-Process Determinism**: Rather than relying on Python's runtime-randomized `hash()` (which varies across interpreter sessions due to `PYTHONHASHSEED`), our embedder uses deterministic cryptographic integer hashing. This ensures that document vectors persisted to disk and query vectors computed at runtime always exist in the exact same vector space.
 
 ### 2. Vector Store Choice (In-Memory vs. Local vs. Hosted) and Rationale
-- **Chosen Architecture**: **In-Memory Vector Matrix backed by Local SQLite & JSON**.
+- **Chosen Architecture**: **In-Memory Vector Matrix backed by Local SQLite & JSON with Copy-on-Write Snapshotting**.
 - **Why**:
   - **Instant Speed**: Searching in-memory takes **0.8 milliseconds**.
   - **100% Reliable**: Never fails due to cloud downtime or API limits.
+  - **Thread Safety**: Atomic reference swapping ensures ongoing queries never encounter partial index writes or dimension mismatches during background re-indexing.
   - **Zero Cost**: No monthly database subscription bills.
 
 ### 3. Similarity Metric and Why
@@ -258,7 +260,7 @@ How do teachers know if a school is teaching well? They give students tests! We 
 ### 1. How We Know the RAG System Is Working Well
 We use a **Dual Evaluation Framework**:
 1. **Offline Benchmark Suite** (`eval/run_eval.py`): 10 realistic test cases covering refund rules, placement eligibility, syllabus topics, and trick/out-of-scope questions.
-2. **Online Real-Time Telemetry** (`GET /evals/online`): Evaluates live production queries and tracks real learner 👍 / 👎 feedback.
+2. **Online Real-Time Telemetry** (`GET /evals/online`): Evaluates live production queries using claim-level context grounding and tracks real learner 👍 / 👎 feedback.
 
 ### 2. Tracked Metrics & How They Are Computed
 
@@ -278,20 +280,30 @@ We use a **Dual Evaluation Framework**:
 
 1. **Context Precision (Retrieval Hit Rate)**:
    - *Question*: Did the search engine find the correct policy document?
-   - *Our Score*: **100.0%**
-2. **Faithfulness & Grounding (LLM-as-a-Judge)**:
-   - *Question*: Is 100% of the answer provable from the retrieved text without any made-up facts?
-   - *Our Score*: **100.0%**
-3. **Fact Recall (Completeness)**:
-   - *Question*: Did the answer include all essential details (e.g. 7 days, 100% refund, email support)?
-   - *Our Score*: **96.6%**
+   - *Score*: **100.0%**
+2. **Faithfulness & Grounding (Lexical Entailment & LLM-as-a-Judge)**:
+   - *Question*: Is the answer verified against the retrieved text at sentence and claim granularity without ungrounded hallucinations?
+   - *Score*: **83.6%** (Evaluated via claim-level token containment & LLM judge reasoning; replaces superficial citation-only passes).
+3. **Fact Recall (Correctness)**:
+   - *Question*: Did the answer include all essential key facts (e.g., 7 days, 100% refund, email support)?
+   - *Score*: **83.5%**
 4. **Speed & Latency (P50)**:
-   - *Our Score*: **~760 ms** (Sub-second response time).
+   - *Score*: **~360 ms** (Fast end-to-end response time).
 
 ### 3. Limitations of the Evaluation Approach
 1. **AI Judge Quirks**: The AI judge sometimes slightly prefers longer answers over concise ones.
 2. **Static Test Suite**: If Scaler launches a new Data Engineering course, we must add new test cases to `test_cases.json`.
 3. **Conversational Slang**: Real users might have typos or ask confusing multi-part questions, which is why our **Online Evals feedback loop** monitors live traffic continuously.
+
+---
+
+## g. Production Hardening & Reliability Architecture
+
+| Area | Challenge Addressed | Production Mechanism |
+| :--- | :--- | :--- |
+| **Deterministic Vector Search** | Python `hash()` randomization per process (`PYTHONHASHSEED`) causing vector mismatch between disk index and runtime queries. | `_stable_hash()` using MD5 integer hashing ensures stable, reproducible 256-d embeddings across all process lifecycles. |
+| **Concurrent Index Rebuilding** | FastAPI threadpool executing `/ingest` while concurrent `/ask` queries search active indices. | **Copy-on-Write Index Snapshotting** + `threading.RLock()`: rebuilds index in isolation and atomically swaps reference. |
+| **True Grounding Telemetry** | Tautological evaluation passing any response containing brackets `[` or `"Scaler"`. | **Claim-Level Lexical Entailment (`compute_grounding_score`)**: extracts assertion sentences and measures factual containment in retrieved passages. |
 
 ---
 

@@ -2,6 +2,7 @@
 Vector Store & Hybrid Search Engine (Dense Vector + BM25 Lexical + Reciprocal Rank Fusion).
 """
 
+import hashlib
 import json
 import math
 import re
@@ -42,6 +43,11 @@ SYNONYM_EXPANSIONS = {
 }
 
 
+def _stable_hash(text: str) -> int:
+    """Deterministic hash across process boundaries and Python interpreter restarts."""
+    return int(hashlib.md5(text.encode("utf-8")).hexdigest(), 16)
+
+
 class SimpleDenseEmbedder:
     def __init__(self, dim: int = 256):
         self.dim = dim
@@ -64,7 +70,7 @@ class SimpleDenseEmbedder:
             return vec
 
         for idx, token in enumerate(tokens):
-            h1 = hash(token) % self.dim
+            h1 = _stable_hash(token) % self.dim
             vec[h1] += 1.0
 
             pos_weight = 1.0 / (1.0 + 0.03 * min(idx, 30))
@@ -72,7 +78,7 @@ class SimpleDenseEmbedder:
 
             for j in range(len(token) - 2):
                 gram = token[j:j+3]
-                h2 = hash(gram) % self.dim
+                h2 = _stable_hash(gram) % self.dim
                 vec[h2] += 0.35
 
         return vec

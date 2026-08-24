@@ -13,6 +13,52 @@ from typing import Dict, Any, List, Optional
 from src.config import TRACES_DB_PATH, TRACES_JSONL_PATH
 
 
+COMMON_STOPWORDS = {
+    "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", "he",
+    "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were",
+    "will", "with", "this", "these", "those", "you", "your", "they", "their",
+    "can", "could", "should", "would", "may", "might", "must", "scaler",
+    "please", "official", "support", "according", "policy", "policies", "stated",
+    "documentation", "team", "section", "doc", "chunk", "information", "regarding"
+}
+
+
+def compute_grounding_score(answer: str, context_chunks: List[Dict[str, Any]]) -> float:
+    """
+    Computes claim-level lexical entailment and grounding score (0.0 to 1.0)
+    between generated answer assertions and retrieved context chunks.
+    """
+    if not context_chunks:
+        return 0.0
+    context_text = " ".join([
+        c.get("content", "") or c.get("snippet", "") or c.get("raw_content", "") or c.get("content_preview", "")
+        for c in context_chunks
+    ]).lower()
+    context_words = set(re.findall(r"\b[a-z0-9]+\b", context_text))
+    if not context_words:
+        return 0.0
+
+    # Strip citation tags like [DOC:01-SEC:02]
+    clean_answer = re.sub(r"\[[^\]]+\]", "", answer)
+    sentences = [s.strip() for s in re.split(r"[.\n;]", clean_answer) if len(s.strip()) > 10]
+    if not sentences:
+        return 1.0
+
+    sentence_grounding_scores = []
+    for s in sentences:
+        words = [w for w in re.findall(r"\b[a-z0-9]+\b", s.lower()) if w not in COMMON_STOPWORDS and len(w) > 2]
+        if not words:
+            continue
+        grounded_count = sum(1 for w in words if w in context_words)
+        sentence_grounding_scores.append(grounded_count / len(words))
+
+    if not sentence_grounding_scores:
+        return 1.0
+
+    mean_grounding = sum(sentence_grounding_scores) / len(sentence_grounding_scores)
+    return round(float(mean_grounding), 2)
+
+
 class StructuredTracer:
     def __init__(self, db_path: Path = TRACES_DB_PATH, jsonl_path: Path = TRACES_JSONL_PATH):
         self.db_path = Path(db_path)
@@ -131,15 +177,11 @@ class StructuredTracer:
         sentences = [s.strip() for s in re.split(r"[.!?\n]", answer) if len(s.strip()) > 10]
         citation_density = round(min(1.0, len(citations) / max(1, len(sentences))), 2)
 
-        # Real-time Faithfulness Estimation
+        # Real-time Faithfulness Estimation via Claim-Level Context Grounding
         if is_out_of_scope:
             faithfulness = 1.0
-        elif len(citations) > 0:
-            faithfulness = 1.0
-        elif avg_score >= 0.40:
-            faithfulness = 0.85
         else:
-            faithfulness = 0.50
+            faithfulness = compute_grounding_score(answer, retrieved_chunks)
 
         # Flagging Criteria for Human-in-the-loop review
         flagged = 0
@@ -147,9 +189,9 @@ class StructuredTracer:
         if avg_score < 0.28 and not is_out_of_scope:
             flagged = 1
             review_reasons.append("Low Context Relevance (<0.28)")
-        if faithfulness < 0.70:
+        if faithfulness < 0.70 and not is_out_of_scope:
             flagged = 1
-            review_reasons.append("Low Faithfulness / Missing Citations")
+            review_reasons.append(f"Low Faithfulness Grounding ({faithfulness:.2f})")
         if trace.get("total_latency_ms", 0) > 4000:
             flagged = 1
             review_reasons.append("High Latency (>4000ms)")

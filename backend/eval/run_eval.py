@@ -76,13 +76,38 @@ Respond ONLY with valid JSON:
     except Exception as e:
         pass
 
-    # Heuristic fallback if remote judge fails
+    # Deterministic grounding and fact verification fallback
     matched = sum(1 for f in expected_facts if f.lower() in answer.lower())
     fact_score = matched / max(1, len(expected_facts))
+
+    # Compute sentence-level context grounding
+    clean_answer = re.sub(r"\[[^\]]+\]", "", answer)
+    context_words = set(re.findall(r"\b[a-z0-9]+\b", context.lower()))
+    sentences = [s.strip() for s in re.split(r"[.\n;]", clean_answer) if len(s.strip()) > 10]
+
+    stop_words = {
+        "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", "he",
+        "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were",
+        "will", "with", "this", "these", "those", "you", "your", "they", "their",
+        "can", "could", "should", "would", "may", "might", "must", "scaler",
+        "please", "official", "support", "according", "policy", "policies", "stated"
+    }
+
+    if not sentences or not context_words:
+        grounding_score = 0.5 if context else 1.0
+    else:
+        scores = []
+        for s in sentences:
+            tokens = [w for w in re.findall(r"\b[a-z0-9]+\b", s.lower()) if w not in stop_words and len(w) > 2]
+            if tokens:
+                supported = sum(1 for t in tokens if t in context_words)
+                scores.append(supported / len(tokens))
+        grounding_score = round(sum(scores) / len(scores), 2) if scores else 0.5
+
     return {
-        "faithfulness": 1.0 if "[" in answer or "Scaler" in answer else 0.5,
+        "faithfulness": grounding_score,
         "correctness": round(fact_score, 2),
-        "rationale": "Evaluated by deterministic fact matcher fallback"
+        "rationale": f"Deterministic evaluation (grounding: {grounding_score:.2f}, fact recall: {fact_score:.2f})"
     }
 
 
