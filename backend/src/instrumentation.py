@@ -4,6 +4,7 @@ Supports stdout, JSONL, SQLite persistence, and live Online Evaluation metrics.
 """
 
 import json
+import logging
 import sqlite3
 import time
 import re
@@ -11,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from src.config import TRACES_DB_PATH, TRACES_JSONL_PATH
+
+logger = logging.getLogger("scaler.instrumentation")
 
 
 COMMON_STOPWORDS = {
@@ -65,46 +68,55 @@ class StructuredTracer:
         self.jsonl_path = Path(jsonl_path)
         self._init_sqlite()
 
+    def _get_connection(self) -> sqlite3.Connection:
+        """Helper to create a SQLite connection with timeout and busy handling."""
+        return sqlite3.connect(self.db_path, timeout=15.0)
+
     def _init_sqlite(self):
         """Create SQLite schema for query observability traces and online evals."""
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS query_traces (
-                    trace_id TEXT PRIMARY KEY,
-                    timestamp TEXT NOT NULL,
-                    query TEXT NOT NULL,
-                    top_k_chunks TEXT NOT NULL,
-                    similarity_scores TEXT NOT NULL,
-                    prompt TEXT NOT NULL,
-                    prompt_tokens INTEGER,
-                    answer TEXT NOT NULL,
-                    citations TEXT,
-                    retrieval_latency_ms REAL,
-                    generation_latency_ms REAL,
-                    total_latency_ms REAL NOT NULL,
-                    provider_used TEXT,
-                    status TEXT NOT NULL
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS online_evals (
-                    trace_id TEXT PRIMARY KEY,
-                    timestamp TEXT NOT NULL,
-                    query TEXT NOT NULL,
-                    faithfulness_score REAL NOT NULL,
-                    context_relevance REAL NOT NULL,
-                    citation_density REAL NOT NULL,
-                    is_out_of_scope INTEGER NOT NULL,
-                    user_rating INTEGER DEFAULT 0,
-                    user_feedback TEXT,
-                    flagged_for_review INTEGER DEFAULT 0,
-                    review_reason TEXT,
-                    FOREIGN KEY(trace_id) REFERENCES query_traces(trace_id)
-                )
-            """)
-            conn.commit()
+        try:
+            with self._get_connection() as conn:
+                conn.execute("PRAGMA journal_mode=WAL;")
+                conn.execute("PRAGMA synchronous=NORMAL;")
+                cursor = conn.cursor()
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS query_traces (
+                        trace_id TEXT PRIMARY KEY,
+                        timestamp TEXT NOT NULL,
+                        query TEXT NOT NULL,
+                        top_k_chunks TEXT NOT NULL,
+                        similarity_scores TEXT NOT NULL,
+                        prompt TEXT NOT NULL,
+                        prompt_tokens INTEGER,
+                        answer TEXT NOT NULL,
+                        citations TEXT,
+                        retrieval_latency_ms REAL,
+                        generation_latency_ms REAL,
+                        total_latency_ms REAL NOT NULL,
+                        provider_used TEXT,
+                        status TEXT NOT NULL
+                    )
+                """)
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS online_evals (
+                        trace_id TEXT PRIMARY KEY,
+                        timestamp TEXT NOT NULL,
+                        query TEXT NOT NULL,
+                        faithfulness_score REAL NOT NULL,
+                        context_relevance REAL NOT NULL,
+                        citation_density REAL NOT NULL,
+                        is_out_of_scope INTEGER NOT NULL,
+                        user_rating INTEGER DEFAULT 0,
+                        user_feedback TEXT,
+                        flagged_for_review INTEGER DEFAULT 0,
+                        review_reason TEXT,
+                        FOREIGN KEY(trace_id) REFERENCES query_traces(trace_id)
+                    )
+                """)
+                conn.commit()
+        except Exception as e:
+            logger.error("Failed to initialize SQLite telemetry database: %s", e, exc_info=True)
 
     def record_trace(self, trace: Dict[str, Any], emit_stdout: bool = True) -> Dict[str, Any]:
         """Save trace to SQLite, append to JSONL, run online evaluation, and emit log."""
@@ -112,13 +124,16 @@ class StructuredTracer:
             trace["timestamp"] = datetime.now(timezone.utc).isoformat()
 
         # 1. Append to JSONL
-        self.jsonl_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.jsonl_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(trace, ensure_ascii=False) + "\n")
+        try:
+            self.jsonl_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.jsonl_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(trace, ensure_ascii=False) + "\n")
+        except Exception as e:
+            logger.error("Failed to append trace %s to JSONL: %s", trace.get("trace_id"), e, exc_info=True)
 
         # 2. Save to SQLite query_traces
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with self._get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     INSERT INTO query_traces (
@@ -143,8 +158,8 @@ class StructuredTracer:
                     trace.get("status", "SUCCESS")
                 ))
                 conn.commit()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("Failed to insert query trace %s to SQLite: %s", trace.get("trace_id"), e, exc_info=True)
 
         # 3. Execute Real-Time Online Evaluation
         online_eval = self._evaluate_online(trace)
@@ -200,7 +215,7 @@ class StructuredTracer:
 
         # Persist Online Eval to SQLite
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with self._get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     INSERT OR REPLACE INTO online_evals (
@@ -222,8 +237,8 @@ class StructuredTracer:
                     review_reason_str
                 ))
                 conn.commit()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("Failed to insert online evaluation for trace %s to SQLite: %s", trace.get("trace_id"), e, exc_info=True)
 
         return {
             "faithfulness_score": faithfulness,
@@ -239,7 +254,7 @@ class StructuredTracer:
         try:
             flagged = 1 if rating == -1 else 0
             reason_add = "User Thumbs Down Feedback" if rating == -1 else ""
-            with sqlite3.connect(self.db_path) as conn:
+            with self._get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     UPDATE online_evals 
@@ -251,13 +266,14 @@ class StructuredTracer:
                 """, (rating, feedback, flagged, reason_add, reason_add, trace_id))
                 conn.commit()
                 return True
-        except Exception:
+        except Exception as e:
+            logger.error("Failed to record feedback for trace %s: %s", trace_id, e, exc_info=True)
             return False
 
     def get_online_eval_summary(self) -> Dict[str, Any]:
         """Aggregate real-time metrics across all live production traffic."""
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with self._get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
                 cursor.execute("""
@@ -310,6 +326,7 @@ class StructuredTracer:
                     "recent_flagged_queries": flagged_rows
                 }
         except Exception as e:
+            logger.error("Failed to fetch online eval summary: %s", e, exc_info=True)
             return {"error": str(e), "total_live_queries": 0}
 
     def _emit_stdout(self, trace: Dict[str, Any]):
@@ -349,7 +366,7 @@ class StructuredTracer:
     def get_recent_traces(self, limit: int = 50) -> List[Dict[str, Any]]:
         """Retrieve recent query traces from SQLite."""
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with self._get_connection() as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
                 cursor.execute("""
@@ -366,5 +383,6 @@ class StructuredTracer:
                     item["citations"] = json.loads(item["citations"]) if item["citations"] else []
                     results.append(item)
                 return results
-        except Exception:
+        except Exception as e:
+            logger.error("Failed to fetch recent traces: %s", e, exc_info=True)
             return []
